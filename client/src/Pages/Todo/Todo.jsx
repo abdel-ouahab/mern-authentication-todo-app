@@ -9,28 +9,39 @@ import {
   SearchForm,
   Button,
 } from "../../components/index";
+import { Input } from  '../../components/index'
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import  { todoSchema } from '../../Schema/Schema'
 import TaskApi from "../../api/todo-api";
+import { OrbitProgress } from 'react-loading-indicators'
 import { useQuery } from '@tanstack/react-query';
 import { FaSignOutAlt } from "react-icons/fa";
 import { FaFaceGrinBeam } from "react-icons/fa6";
 import { v4 as uuidv4 } from "uuid";
 uuidv4();
 
-const api = "http://127.0.0.1:3001/api/todo";
+const api = import.meta.env.VITE_API_TODO;
 function Todo() {
     const [, removeCookie] = useCookies(['token']);
     const [todos, setTodos] = useState([]);
-
+    
     const [filteredTasks, setFilteredTasks] = useState([]);
     const [inputValue, setInputValue] = useState("");
-    const userId = localStorage.getItem('userID');
+    const userID = localStorage.getItem('userID');
     const firstName = localStorage.getItem('firstname');
 
+    const { register, handleSubmit, formState: { errors }, reset } = useForm({
+      resolver: yupResolver(todoSchema),
+      defaultValues: {
+        description: '',
+      },
+    });
 
     const { data, isLoading, refetch } = useQuery({
-      queryKey: ['tasks', userId], // Include userId in queryKey to refetch when it changes
+      queryKey: ['tasks', userID], 
       queryFn: async () => {
-          const res = await fetch(`${api}?userID=${userId}`);
+          const res = await fetch(`${api}?userID=${userID}`);
           const json = await res.json();
           setTodos(json.data);
           return json.data;
@@ -39,12 +50,14 @@ function Todo() {
   
     
     const handleAddTask = async (description, userID) => {
-      const data = { 
-        description: description,
-        userID: userID
-       };
-      await TaskApi.addTask(data);
-      refetch();
+      try {
+        const data = { description, userID };
+        await TaskApi.addTask(data);
+        refetch(); // Reload the tasks
+        reset(); // Reset the input field
+      } catch (error) {
+        console.error('Error adding task:', error);
+      }
     };
 
     const handleCompletedTask = async (id) => {
@@ -86,26 +99,6 @@ function Todo() {
       setFilteredTasks(filter);
     }, [inputValue]);
   
-    /*const addTask = (todo) => {
-      setTodos([
-        ...todos,
-        { id: uuidv4(), description: todo, completed: false, isEditing: false },
-      ]);
-      console.log(todos);
-    };*/
-  
-    /*const completedTask = (id) => {
-      setTodos(
-        todos.map((todo) =>
-          todo.id === id ? { ...todo, completed: !todo.completed } : todo
-        )
-      );
-    };*/
-  
-    /*const deleteTask = (id) => {
-      setTodos(todos.filter((todo) => todo.id !== id));
-    };*/
-  
     const editForm = (id) => {
       setTodos(
         todos.map((todo) =>
@@ -113,21 +106,12 @@ function Todo() {
         )
       );
     };
-  
-    /*const editTask = (task, id) => {
-      setTodos(
-        todos.map((todo) =>
-          todo.id === id
-            ? { ...todo, description: task, isEditing: !todo.isEditing }
-            : todo
-        )
-      );
-    };*/
 
     const logout = () => {
       removeCookie("access_token","")
       window.localStorage.removeItem("userID")
       window.localStorage.removeItem("loggedIn")
+      window.localStorage.removeItem("firstname")
       window.location.reload(false)
     };
 
@@ -141,11 +125,21 @@ function Todo() {
             {`Hi ${firstName}`}
             <FaFaceGrinBeam className="ml-3 text-yellow-400" />
           </Title>
-          
           <Title>Get Things Done!</Title>
-
-          
-          <Form addTask={handleAddTask} />
+          <form
+              className="flex flex-row mb-7"
+              onSubmit={handleSubmit((data) => handleAddTask(data.description, userID))}
+            >
+                <Input 
+                    placeholder="What is the task today?"
+                    name="description"
+                    register={{...register("description")}}
+                    error={errors.description?.message}
+                    classname={""}
+                    {...register("description")}
+                />
+                <Button title= "Add Task" variant="primary" />
+            </form>
     
           <SearchForm handleChange={handleChange} />
           <div className="flex  justify-between text-gray-300 text-x mb-1">
@@ -157,10 +151,10 @@ function Todo() {
             </p>
           </div>
           
-
-          {/* Check if data is available and still loading */}
           {isLoading ? (
-            <p>Loading...</p>
+            <div className="flex justify-center mt-5">
+              <OrbitProgress variant="track-disc" color="#8a31cc" size="large" text="wait" textColor="#c5c5c5" />
+            </div>
           ) : (
             filteredTasks.map((task, index) =>
               task.isEditing ? (

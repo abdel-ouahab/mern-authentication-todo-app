@@ -1,11 +1,8 @@
-import  Axios  from 'axios';
 const BASE_URL = "http://127.0.0.1:3001/api/todo/";
 
 export default class TaskApi {
   static async addTask(data) {
     try {
-      //console.log("Payload being sent:", data); 
-      //const response = await Axios.post(BASE_URL, data); 
       const response = await fetch(BASE_URL, {
         method: 'POST',
         headers: {

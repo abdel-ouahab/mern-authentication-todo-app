@@ -1,30 +1,24 @@
 import { useState } from 'react';
 import { useCookies } from 'react-cookie';
 import { useNavigate } from 'react-router-dom';
-import * as yup from 'yup';
+import { registerSchema } from '../../Schema/Schema'
 import Axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Container, Title, RegisterForm } from '../../components/index';
+import { Container, Title } from '../../components/index';
+import { Button, Input, Error } from '../../components/index';
+import { Link } from 'react-router-dom';
 
-const api = "http://127.0.0.1:3001/api/auth";
+const api = import.meta.env.VITE_API_AUTH;
 const Register = () => {
   const [responseMessage, setResponseMessage] = useState("");
   const [, setCookies] = useCookies(['access_token']);
   const navigate = useNavigate();
 
-  const userSchema = yup.object().shape({
-    firstname: yup.string().lowercase().required("First name is required"),
-    lastname: yup.string().lowercase().required("Last name is required"),
-    username: yup.string().required("Username is required"),
-    age: yup.number().required("Age is required").positive().integer(),
-    email: yup.string().email("Invalid email").required("Email is required"),
-    password: yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
-    confirmPassword: yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
-  });
+  
 
   const {register, handleSubmit, formState: { errors },} = useForm({
-    resolver: yupResolver(userSchema),
+    resolver: yupResolver(registerSchema),
     defaultValues: {
       firstname: '',
       lastname: '',
@@ -59,12 +53,79 @@ const Register = () => {
   return (
     <Container>
       <Title>Create a new account</Title>
-      <RegisterForm
-        inputref={register}
-        onSubmit={handleSubmit(onSubmit)}
-        errors={errors}
-        responseMessage={responseMessage}
+      <form className="flex flex-col items-center gap-4" onSubmit={handleSubmit(onSubmit)}>
+      <Input
+        name="firstname"
+        placeholder="First name"
+        register={{...register("firstname")}}
+        error={errors.firstname?.message}
+        classname="rounded"
+        {...register("firstname")}
       />
+      <Input
+        name="lastname"
+        placeholder="Last name"
+        register={{...register("lastname")}}
+        error={errors.lastname?.message}
+        classname="rounded"
+        {...register("lastname")}
+      />
+      <Input
+        name="username"
+        placeholder="Username"
+        register={{...register("username")}}
+        error={errors.username?.message}
+        classname="rounded"
+        {...register("username")}
+      />
+      <Input
+        name="age"
+        type="number"
+        placeholder="Age"
+        register={{...register("age")}}
+        error={errors.age?.message}
+        classname="rounded"
+        {...register("age")}
+      />
+      <Input
+        name="email"
+        type="email"
+        placeholder="Email"
+        register={{...register("email")}}
+        error={errors.email?.message}
+        classname="rounded"
+        {...register("email")}
+      />
+      <Input
+        name="password"
+        type="password"
+        placeholder="Password"
+        register={{...register("password")}}
+        error={errors.password?.message}
+        classname="rounded"
+        {...register("password")}
+      />
+      <Input
+        name="confirmPassword"
+        type="password"
+        placeholder="confirm Password"
+        register={{...register("confirmPassword")}}
+        error={errors.confirmPassword?.message}
+        classname="rounded"
+        {...register("confirmPassword")}
+      />
+      <Error 
+        error={responseMessage}
+      />
+      <Button 
+          title= "Sign up" 
+          variant="primary"
+          classname={"rounded p-2"}
+        />
+      <Link to="/" className="text-gray-100 underline">
+        Already have an account?
+      </Link>
+    </form>
     </Container>
   );
 };

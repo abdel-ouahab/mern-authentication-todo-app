@@ -1,20 +1,23 @@
 import  Axios  from 'axios';
-import  {userSchema} from './Schema'
+import  {loginSchema} from '../../Schema/Schema'
 import { useState } from 'react';
 import {useCookies} from 'react-cookie';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Container , Title, LoginForm } from '../../components/index'
+import { Container , Title } from '../../components/index'
+import { Button, Input, Error } from '../../components/index'
+import { Link } from 'react-router-dom'
 
-const api = "http://127.0.0.1:3001/api/auth";
+
+const api = import.meta.env.VITE_API_AUTH;
+
 function Login() {
   const [responseMessage, setResponseMessage] = useState("");
   const [, setCookies] = useCookies("access_token")
   const navigate = useNavigate();
-
   const { register , handleSubmit, formState: { errors },} = useForm({
-    resolver: yupResolver(userSchema),
+    resolver: yupResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
@@ -40,12 +43,35 @@ function Login() {
     <>
       <Container>
         <Title>Login</Title>
-        <LoginForm 
-          inputref={register}
-          onSubmit={handleSubmit(onSubmit)}
-          errors={errors}
-          responseMessage={responseMessage}
+        <form className="flex flex-col items-center  gap-4" onSubmit={handleSubmit(onSubmit)}>
+        <Input
+          name="email"
+          type="email"
+          placeholder="Email"
+          register={{...register("email")}}
+          error={errors.email?.message}
+          classname="rounded"
+          {...register("email")}
         />
+        <Input
+          name="password"
+          type="password"
+          placeholder="Password"
+          register={{...register("password")}}
+          error={errors.password?.message}
+          classname="rounded"
+          {...register("password")}
+        />
+        <Error 
+          error={responseMessage}
+        />
+        <Button 
+          title= "Login" 
+          variant="primary"
+          classname={"rounded p-2"}
+        />
+        <Link to='/register' className="text-gray-100 underline">Sign up</Link>
+      </form>
       </Container>
     </>
   )
